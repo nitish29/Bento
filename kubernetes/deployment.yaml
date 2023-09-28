@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bento
+  labels:
+    app: bento
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: bento
+  template:
+    metadata:
+      labels:
+        app: bento
+    spec:
+      containers:
+      - name: bento
+        image: vaticancameos/bento:latest  
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 90
+        env:
+          - name: API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: bento
+                key: API_TOKEN
