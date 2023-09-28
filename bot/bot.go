@@ -9,8 +9,6 @@ import (
 
 type Spoke interface {
 	Commands() map[string]interface{}
-	Subcommands() map[string]interface{}
-	Description() string
 	Handler() interface{}
 }
 

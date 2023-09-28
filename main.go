@@ -3,13 +3,10 @@ package main
 import (
 	"fmt"
 	"main/bot"
-	"main/bot/dialogues"
+	"main/bot/spokes/dialogues"
 	"main/bot/spokes/general"
-	"math/rand"
 	"os"
 	"os/signal"
-	"strings"
-	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -23,34 +20,7 @@ func main() {
 	}
 
 	bot.RegisterSpoke(general.GetPrefix())
-
-	bot.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
-		if m.Author.ID == s.State.User.ID {
-			return
-		}
-		commmands := strings.Split(m.Content, " ")
-		baseCmd := commmands[0]
-		if len(commmands) > 1 {
-			if baseCmd == botPrefix {
-				switch commmands[1] {
-				case "name":
-					s.ChannelMessageSend(m.ChannelID, dialogues.Bento)
-				}
-			}
-		}
-
-		if strings.Contains(strings.ToLower(m.Content), strings.ToLower("muppet")) {
-			rand.Seed(time.Now().Unix())
-			n := rand.Int() % len(dialogues.ToddPhrases)
-			s.ChannelMessageSend(m.ChannelID, dialogues.ToddPhrases[n])
-		}
-
-		if strings.Contains(strings.ToLower(m.Content), strings.ToLower("oops")) {
-			rand.Seed(time.Now().Unix())
-			n := rand.Int() % len(dialogues.BenPhrases)
-			s.ChannelMessageSend(m.ChannelID, dialogues.BenPhrases[n])
-		}
-	})
+	bot.RegisterSpoke(dialogues.GetDialogues())
 
 	bot.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
 
