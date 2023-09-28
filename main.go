@@ -19,6 +19,7 @@ func main() {
 		fmt.Println("Error creating Discord session: ", err)
 	}
 
+	// Register spokes to bot
 	bot.RegisterSpoke(general.GetPrefix())
 	bot.RegisterSpoke(dialogues.GetDialogues())
 
