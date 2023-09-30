@@ -64,7 +64,7 @@ func GetHangManGame() *HangManGame {
 func (p *HangManGame) Commands(s *discordgo.Session, m *discordgo.MessageCreate) map[string]func() {
 	cmdMap := make(map[string]func())
 
-	cmdMap["prefix"] = func() {
+	cmdMap["hangman"] = func() {
 		s.ChannelMessageSend(m.ChannelID, "Bento's prefix is '.'")
 	}
 	return cmdMap
@@ -74,9 +74,6 @@ func (p *HangManGame) Handler() interface{} {
 	return func(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if m.Author.ID == s.State.User.ID {
 			return
-		}
-		if m.Content == "p" {
-			s.ChannelMessageSend(m.ChannelID, "Bento's prefix is '.' he he ")
 		}
 	}
 }
