@@ -11,8 +11,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-const botPrefix string = "."
-
 func main() {
 	bot, err := bot.New()
 	if err != nil {
@@ -20,8 +18,9 @@ func main() {
 	}
 
 	// Register spokes to bot
-	bot.RegisterSpoke(general.GetPrefix())
+
 	bot.RegisterSpoke(dialogues.GetDialogues())
+	bot.RegisterSpoke(general.GetPrefix())
 
 	bot.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
 

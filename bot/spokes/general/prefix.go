@@ -1,6 +1,8 @@
 package general
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"github.com/bwmarrin/discordgo"
+)
 
 type Prefix struct{}
 
@@ -8,16 +10,13 @@ func GetPrefix() *Prefix {
 	return &Prefix{}
 }
 
-func (p *Prefix) Commands() map[string]interface{} {
-	return nil
-}
+func (p *Prefix) Commands(s *discordgo.Session, m *discordgo.MessageCreate) map[string]func() {
+	cmdMap := make(map[string]func())
 
-func (p *Prefix) Subcommands() map[string]interface{} {
-	return nil
-}
-
-func (p *Prefix) Description() string {
-	return ""
+	cmdMap["prefix"] = func() {
+		s.ChannelMessageSend(m.ChannelID, "Bento's prefix is '.'")
+	}
+	return cmdMap
 }
 
 func (p *Prefix) Handler() interface{} {
@@ -25,10 +24,8 @@ func (p *Prefix) Handler() interface{} {
 		if m.Author.ID == s.State.User.ID {
 			return
 		}
-
-		if m.Content == ".prefix" {
-			s.ChannelMessageSend(m.ChannelID, "Bento's prefix is .")
+		if m.Content == "p" {
+			s.ChannelMessageSend(m.ChannelID, "Bento's prefix is '.' he he ")
 		}
 	}
-
 }

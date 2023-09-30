@@ -7,8 +7,10 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+const BotPrefix string = "."
+
 type Spoke interface {
-	Commands() map[string]interface{}
+	Commands(s *discordgo.Session, m *discordgo.MessageCreate) map[string]func()
 	Handler() interface{}
 }
 
@@ -41,8 +43,26 @@ func (b *Bot) RegisterSpoke(spoke Spoke) {
 
 func (b *Bot) SyncSpokes() {
 	for _, spoke := range b.Spokes {
+		// need to reassign spoke to interim variable here else commands won't work because of closure and scope of spoke.
+		currentspoke := spoke
 		// Add spoke handler
-		b.AddHandler(spoke.Handler())
-		// Process commands
+		b.AddHandler(currentspoke.Handler())
+
+		// Process commands : use currentspoke and not to avoid closure and scope issues
+		b.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
+			if string(m.Content[0]) != BotPrefix {
+				return
+			}
+			cmdMap := currentspoke.Commands(s, m)
+			for cmd, fn := range cmdMap {
+				if m.Author.ID == s.State.User.ID {
+					return
+				}
+				if m.Content == BotPrefix+cmd {
+					fn()
+					return
+				}
+			}
+		})
 	}
 }

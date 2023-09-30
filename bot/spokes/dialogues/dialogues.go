@@ -18,8 +18,13 @@ func GetDialogues() *Dialogues {
 	return &Dialogues{}
 }
 
-func (p *Dialogues) Commands() map[string]interface{} {
-	return nil
+func (p *Dialogues) Commands(s *discordgo.Session, m *discordgo.MessageCreate) map[string]func() {
+	cmdMap := make(map[string]func())
+
+	cmdMap["dialogues"] = func() {
+		s.ChannelMessageSend(m.ChannelID, "Dialogues command '.'")
+	}
+	return cmdMap
 }
 
 func (p *Dialogues) Handler() interface{} {
