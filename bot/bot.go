@@ -3,6 +3,7 @@ package bot
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -54,11 +55,12 @@ func (b *Bot) SyncSpokes() {
 				return
 			}
 			cmdMap := currentspoke.Commands(s, m)
+			cmds := strings.Split(m.Content, " ")
 			for cmd, fn := range cmdMap {
 				if m.Author.ID == s.State.User.ID {
 					return
 				}
-				if m.Content == BotPrefix+cmd {
+				if cmds[0] == BotPrefix+cmd {
 					fn()
 					return
 				}

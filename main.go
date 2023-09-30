@@ -3,8 +3,7 @@ package main
 import (
 	"fmt"
 	"main/bot"
-	"main/bot/spokes/dialogues"
-	"main/bot/spokes/general"
+	"main/bot/spokes/games"
 	"os"
 	"os/signal"
 
@@ -19,8 +18,9 @@ func main() {
 
 	// Register spokes to bot
 
-	bot.RegisterSpoke(dialogues.GetDialogues())
-	bot.RegisterSpoke(general.GetPrefix())
+	//bot.RegisterSpoke(dialogues.GetDialogues())
+	//bot.RegisterSpoke(general.GetPrefix())
+	bot.RegisterSpoke(games.GetHangManSpoke())
 
 	bot.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
 
@@ -39,4 +39,8 @@ func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	<-c
+}
+
+func GetHangManSpoke() {
+	panic("unimplemented")
 }
