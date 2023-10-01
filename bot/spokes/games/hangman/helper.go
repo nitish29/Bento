@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	EMOJI_HANGMAN_ROPE    = ".       |"
+	EMOJI_HANGMAN_ROPE    = "\n.       |"
 	EMOJI_QUESTION_MARK   = ":question:"
 	EMOJI_POINT_FINGER_UP = ":point_up:"
 	EMOJI_COAT            = ":coat:"
@@ -85,7 +85,7 @@ func (h *Hangman) updateHangmanStatus(wrongAnswers int) {
 
 func (h *Hangman) updateBlanks(letter string) {
 	if letter == "" {
-		for _, _ = range h.game.truth {
+		for range h.game.truth {
 			h.game.blanks = append(h.game.blanks, EMOJI_QUESTION_MARK)
 		}
 	} else {
