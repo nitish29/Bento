@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"golang.org/x/exp/slices"
 )
 
 const (
@@ -69,29 +70,95 @@ func initGame() *Game {
 	}
 }
 
-func (h *Hangman) processInput(input string) {
+func (h *Hangman) updateHangmanStatus(wrongAnswers int) {
+	// The arms and body needs to be in a straight line and therefore no new line character
+	if wrongAnswers == 3 || wrongAnswers == 4 {
+		h.game.status += h.game.printList[wrongAnswers-1]
+	} else {
+		h.game.status += h.game.printList[wrongAnswers-1] + "\n"
+	}
+	if h.game.wrongAnswers == len(h.game.printList) {
+		h.isGameOver = true
+		h.hasPlayerWon = false
+	}
+}
+
+func (h *Hangman) updateBlanks(letter string) {
+	if letter == "" {
+		for _, _ = range h.game.truth {
+			h.game.blanks = append(h.game.blanks, EMOJI_QUESTION_MARK)
+		}
+	} else {
+		for i, v := range h.game.truth {
+			if letter == string(v) {
+				h.game.blanks[i] = string(v)
+			}
+		}
+	}
+
+	if strings.Join(h.game.blanks, "") == h.game.truth {
+		h.isGameOver = true
+		h.hasPlayerWon = true
+	}
+}
+
+func (h *Hangman) processInput(letter string) {
+	if h.isGameOver {
+		return
+	}
+
+	if strings.Contains(h.game.truth, letter) {
+		h.updateBlanks(letter)
+	} else {
+		h.game.wrongAnswers += 1
+		h.updateHangmanStatus(h.game.wrongAnswers)
+	}
+	if !slices.Contains(h.game.guessedLetters, letter) && letter != "" {
+		h.game.guessedLetters = append(h.game.guessedLetters, letter)
+	}
 
 }
 
 func (h *Hangman) getGameStatus() string {
-	return "placeholder"
+	result := ""
+	if h.isGameOver {
+		result += STR_GAME_OVER
+		if h.hasPlayerWon {
+			result += STR_YOU_WON
+		} else {
+			result += STR_YOU_LOST + "\n" + "The Word was " + h.game.truth
+		}
+	} else {
+		result = STR_GUESSED_SO_FAR
+		guesses := h.game.guessedLetters
+		for _, v := range guesses {
+			result += v + ","
+		}
+	}
+
+	blanks := ""
+	for _, b := range h.game.blanks {
+		blanks += b + "\t"
+	}
+
+	return "\n" + blanks + "\n" + h.game.status + "\n" + result
 }
 
 type HangManSpoke struct {
-	gameInstances      map[string]Hangman
+	gameInstances      map[string]*Hangman
 	challengerToServer map[string]string
 	serverToChallenger map[string]string
 }
 
 func GetHangManSpoke() *HangManSpoke {
 	return &HangManSpoke{
-		gameInstances:      make(map[string]Hangman),
+		gameInstances:      make(map[string]*Hangman),
 		challengerToServer: make(map[string]string),
 		serverToChallenger: make(map[string]string),
 	}
 }
 
-func (p *HangManSpoke) Commands(s *discordgo.Session, m *discordgo.MessageCreate) map[string]func() {
+func (h *HangManSpoke) Commands(s *discordgo.Session, m *discordgo.MessageCreate) map[string]func() {
 	cmdMap := make(map[string]func())
 
 	cmdMap["hangman"] = func() {
@@ -99,15 +166,15 @@ func (p *HangManSpoke) Commands(s *discordgo.Session, m *discordgo.MessageCreate
 		channelId := m.ChannelID
 		authorId := m.Author.ID
 		// Only one instance of game running per server
-		_, exists := p.gameInstances[serverId]
+		_, exists := h.gameInstances[serverId]
 		if exists {
 			s.ChannelMessageSend(channelId, STR_ALREADY_PLAYING)
 			return
 		}
-		p.gameInstances[serverId] = *New(serverId, channelId, authorId)
+		h.gameInstances[serverId] = New(serverId, channelId, authorId)
 		challenger, _ := s.UserChannelCreate(authorId)
-		p.challengerToServer[challenger.ID] = serverId
-		p.serverToChallenger[serverId] = challenger.ID
+		h.challengerToServer[challenger.ID] = serverId
+		h.serverToChallenger[serverId] = challenger.ID
 		if challenger.ID == channelId {
 			s.ChannelMessageSend(m.ChannelID, "You cannot play Hangman in a private chat.")
 			return
@@ -115,14 +182,49 @@ func (p *HangManSpoke) Commands(s *discordgo.Session, m *discordgo.MessageCreate
 		s.ChannelMessageSend(challenger.ID, STR_GET_WORD)
 	}
 
-	cmdMap["word"] = p.wordCmd(s, m)
+	cmdMap["word"] = h.wordCmd(s, m)
+	cmdMap["abort"] = h.abortCmd(s, m)
 	return cmdMap
 }
 
-func (p *HangManSpoke) Handler() interface{} {
+func (h *HangManSpoke) Handler() interface{} {
 	return func(s *discordgo.Session, m *discordgo.MessageCreate) {
+		if m.GuildID == "" {
+			return
+		}
 		if m.Author.ID == s.State.User.ID {
 			return
+		}
+
+		channelId := m.ChannelID
+		serverId := m.GuildID
+
+		gameInstance, exists := h.gameInstances[serverId]
+		if !exists {
+			return
+		}
+
+		//ignore message from other channels
+		if gameInstance.channeld != channelId {
+			return
+		}
+		if !gameInstance.isAcceptingLetters {
+			return
+		}
+		// accept single characters only
+		if len(m.Content) != 1 {
+			return
+		}
+
+		gameInstance.isAcceptingLetters = false
+		gameInstance.processInput(m.Content)
+		s.ChannelMessageSend(m.ChannelID, gameInstance.getGameStatus())
+		gameInstance.isAcceptingLetters = true
+		if gameInstance.isGameOver {
+			// Clean up
+			delete(h.challengerToServer, gameInstance.challenger)
+			delete(h.serverToChallenger, serverId)
+			delete(h.gameInstances, serverId)
 		}
 	}
 }
@@ -154,4 +256,23 @@ func (p *HangManSpoke) wordCmd(s *discordgo.Session, m *discordgo.MessageCreate)
 
 	}
 
+}
+
+func (h *HangManSpoke) abortCmd(s *discordgo.Session, m *discordgo.MessageCreate) func() {
+	return func() {
+		if m.GuildID == "" {
+			return
+		}
+
+		serverId := m.GuildID
+		gameInstance, exists := h.gameInstances[serverId]
+		if !exists {
+			s.ChannelMessageSend(m.ChannelID, STR_NO_GAME)
+		}
+
+		delete(h.challengerToServer, gameInstance.challenger)
+		delete(h.serverToChallenger, serverId)
+		delete(h.gameInstances, serverId)
+
+	}
 }
