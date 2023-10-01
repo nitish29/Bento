@@ -1,9 +1,8 @@
-package games
+package hangman
 
 import (
 	"strings"
 
-	"github.com/bwmarrin/discordgo"
 	"golang.org/x/exp/slices"
 )
 
@@ -21,9 +20,10 @@ const (
 	STR_ALREADY_PLAYING   = "I am already playing a game"
 	STR_ABORT_SUCCESS     = "Game stopped"
 	STR_NO_GAME           = "No game running"
-	STR_GUESSED_SO_FAR    = "Guessed so far : "
+	STR_GUESSED_SO_FAR    = "Guessed so far : \n"
 	STR_TRY_HANGMAN       = "Please use .hangman before using the 'word' command"
 	STR_WORD_EMPTY        = "Please type your word with the command Eg: .word [your word]"
+	STR_WORD_EXISTS       = "I already have a word"
 )
 
 type Hangman struct {
@@ -103,6 +103,7 @@ func (h *Hangman) updateBlanks(letter string) {
 }
 
 func (h *Hangman) processInput(letter string) {
+	letter = strings.ToUpper(letter)
 	if h.isGameOver {
 		return
 	}
@@ -142,137 +143,4 @@ func (h *Hangman) getGameStatus() string {
 	}
 
 	return "\n" + blanks + "\n" + h.game.status + "\n" + result
-}
-
-type HangManSpoke struct {
-	gameInstances      map[string]*Hangman
-	challengerToServer map[string]string
-	serverToChallenger map[string]string
-}
-
-func GetHangManSpoke() *HangManSpoke {
-	return &HangManSpoke{
-		gameInstances:      make(map[string]*Hangman),
-		challengerToServer: make(map[string]string),
-		serverToChallenger: make(map[string]string),
-	}
-}
-
-func (h *HangManSpoke) Commands(s *discordgo.Session, m *discordgo.MessageCreate) map[string]func() {
-	cmdMap := make(map[string]func())
-
-	cmdMap["hangman"] = func() {
-		serverId := m.GuildID
-		channelId := m.ChannelID
-		authorId := m.Author.ID
-		// Only one instance of game running per server
-		_, exists := h.gameInstances[serverId]
-		if exists {
-			s.ChannelMessageSend(channelId, STR_ALREADY_PLAYING)
-			return
-		}
-		h.gameInstances[serverId] = New(serverId, channelId, authorId)
-		challenger, _ := s.UserChannelCreate(authorId)
-		h.challengerToServer[challenger.ID] = serverId
-		h.serverToChallenger[serverId] = challenger.ID
-		if challenger.ID == channelId {
-			s.ChannelMessageSend(m.ChannelID, "You cannot play Hangman in a private chat.")
-			return
-		}
-		s.ChannelMessageSend(challenger.ID, STR_GET_WORD)
-	}
-
-	cmdMap["word"] = h.wordCmd(s, m)
-	cmdMap["abort"] = h.abortCmd(s, m)
-	return cmdMap
-}
-
-func (h *HangManSpoke) Handler() interface{} {
-	return func(s *discordgo.Session, m *discordgo.MessageCreate) {
-		if m.GuildID == "" {
-			return
-		}
-		if m.Author.ID == s.State.User.ID {
-			return
-		}
-
-		channelId := m.ChannelID
-		serverId := m.GuildID
-
-		gameInstance, exists := h.gameInstances[serverId]
-		if !exists {
-			return
-		}
-
-		//ignore message from other channels
-		if gameInstance.channeld != channelId {
-			return
-		}
-		if !gameInstance.isAcceptingLetters {
-			return
-		}
-		// accept single characters only
-		if len(m.Content) != 1 {
-			return
-		}
-
-		gameInstance.isAcceptingLetters = false
-		gameInstance.processInput(m.Content)
-		s.ChannelMessageSend(m.ChannelID, gameInstance.getGameStatus())
-		gameInstance.isAcceptingLetters = true
-		if gameInstance.isGameOver {
-			// Clean up
-			delete(h.challengerToServer, gameInstance.challenger)
-			delete(h.serverToChallenger, serverId)
-			delete(h.gameInstances, serverId)
-		}
-	}
-}
-
-func (p *HangManSpoke) wordCmd(s *discordgo.Session, m *discordgo.MessageCreate) func() {
-	return func() {
-		author := m.Author.ID
-		challenger, _ := s.UserChannelCreate(author)
-		// TODO : handle case where user starts game in 2 servers. this might get confused in that case.
-
-		serverID, exists := p.challengerToServer[challenger.ID]
-		if !exists {
-			s.ChannelMessageSend(m.ChannelID, STR_TRY_HANGMAN)
-			return
-		}
-		gameInstance := p.gameInstances[serverID]
-
-		content := strings.Split(m.Content, " ")
-
-		if len(content) <= 1 {
-			s.ChannelMessageSend(m.ChannelID, STR_WORD_EMPTY)
-			return
-		}
-		gameInstance.isAcceptingLetters = true
-		gameInstance.game.truth = content[1]
-		gameInstance.processInput("")
-		// Send blanks and start the game
-		s.ChannelMessageSend(gameInstance.channeld, gameInstance.getGameStatus())
-
-	}
-
-}
-
-func (h *HangManSpoke) abortCmd(s *discordgo.Session, m *discordgo.MessageCreate) func() {
-	return func() {
-		if m.GuildID == "" {
-			return
-		}
-
-		serverId := m.GuildID
-		gameInstance, exists := h.gameInstances[serverId]
-		if !exists {
-			s.ChannelMessageSend(m.ChannelID, STR_NO_GAME)
-		}
-
-		delete(h.challengerToServer, gameInstance.challenger)
-		delete(h.serverToChallenger, serverId)
-		delete(h.gameInstances, serverId)
-
-	}
 }
