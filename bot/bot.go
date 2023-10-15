@@ -49,7 +49,7 @@ func (b *Bot) SyncSpokes() {
 		// Add spoke handler
 		b.AddHandler(currentspoke.Handler())
 
-		// Process commands : use currentspoke and not to avoid closure and scope issues
+		// Process commands : use currentspoke to avoid closure and scope issues
 		b.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
 			if string(m.Content[0]) != BotPrefix {
 				return
