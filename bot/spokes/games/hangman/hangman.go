@@ -1,7 +1,9 @@
 package hangman
 
 import (
+	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -94,6 +96,20 @@ func (h *HangManSpoke) wordCmd(s *discordgo.Session, m *discordgo.MessageCreate)
 			s.ChannelMessageSend(m.ChannelID, STR_WORD_EMPTY)
 			return
 		}
+
+		if len(content) > 2 {
+			s.ChannelMessageSend(m.ChannelID, "Only one word is supported currently. Please feature multi word request with the author")
+			return
+		}
+
+		for _, r := range content[1] {
+			fmt.Println("rune is", r)
+			if !unicode.IsLetter(r) {
+				s.ChannelMessageSend(m.ChannelID, "Word supports only alphabets, please try again.")
+				return
+			}
+		}
+
 		gameInstance.isAcceptingLetters = true
 		gameInstance.game.truth = strings.ToUpper(content[1])
 		gameInstance.processInput("")
