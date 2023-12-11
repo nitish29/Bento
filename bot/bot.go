@@ -10,9 +10,19 @@ import (
 
 const BotPrefix string = "."
 
+type DefaultSpoke struct{}
+
 type Spoke interface {
 	Commands(s *discordgo.Session, m *discordgo.MessageCreate) map[string]func()
 	Handler() interface{}
+}
+
+func (DefaultSpoke) Commands(s *discordgo.Session, m *discordgo.MessageCreate) map[string]func() {
+	return make(map[string]func())
+}
+
+func (DefaultSpoke) Handler() interface{} {
+	return func() {}
 }
 
 type Bot struct {

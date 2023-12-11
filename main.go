@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"main/bot"
+	"main/bot/jobs"
 	"main/bot/spokes/dialogues"
 	"main/bot/spokes/games/hangman"
 	"main/bot/spokes/general"
+	"main/bot/spokes/quotes"
 	"os"
 	"os/signal"
 
@@ -23,6 +25,7 @@ func main() {
 	bot.RegisterSpoke(dialogues.GetDialogues())
 	bot.RegisterSpoke(general.GetPrefix())
 	bot.RegisterSpoke(hangman.GetHangManSpoke())
+	bot.RegisterSpoke(quotes.GetQuote())
 
 	bot.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
 
@@ -36,6 +39,8 @@ func main() {
 		fmt.Println("Bot terminating")
 		bot.Close()
 	}()
+
+	jobs.StartJob(bot.Session)
 
 	fmt.Println("Bot running")
 	c := make(chan os.Signal, 1)
