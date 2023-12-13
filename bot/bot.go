@@ -68,6 +68,7 @@ func (b *Bot) SyncSpokes() {
 			if string(m.Content[0]) != BotPrefix {
 				return
 			}
+
 			cmdMap := currentspoke.Commands(s, m)
 			cmds := strings.Split(m.Content, " ")
 			for cmd, fn := range cmdMap {
