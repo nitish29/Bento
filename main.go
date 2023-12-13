@@ -7,7 +7,6 @@ import (
 	"main/bot/spokes/dialogues"
 	"main/bot/spokes/games/hangman"
 	"main/bot/spokes/general"
-	"main/bot/spokes/quotes"
 	"os"
 	"os/signal"
 
@@ -25,7 +24,6 @@ func main() {
 	bot.RegisterSpoke(dialogues.GetDialogues())
 	bot.RegisterSpoke(general.GetPrefix())
 	bot.RegisterSpoke(hangman.GetHangManSpoke())
-	bot.RegisterSpoke(quotes.GetQuote())
 
 	bot.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
 
@@ -46,8 +44,4 @@ func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	<-c
-}
-
-func GetHangManSpoke() {
-	panic("unimplemented")
 }
