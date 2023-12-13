@@ -22,7 +22,7 @@ func (DefaultSpoke) Commands(s *discordgo.Session, m *discordgo.MessageCreate) m
 }
 
 func (DefaultSpoke) Handler() interface{} {
-	return func() {}
+	return func() { return }
 }
 
 type Bot struct {
@@ -61,9 +61,14 @@ func (b *Bot) SyncSpokes() {
 
 		// Process commands : use currentspoke to avoid closure and scope issues
 		b.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
+			if len(m.Content) <= 0 {
+				return
+			}
+
 			if string(m.Content[0]) != BotPrefix {
 				return
 			}
+
 			cmdMap := currentspoke.Commands(s, m)
 			cmds := strings.Split(m.Content, " ")
 			for cmd, fn := range cmdMap {
