@@ -1,6 +1,7 @@
 package dialogues
 
 import (
+	"main/bot"
 	"math/rand"
 	"strings"
 	"time"
@@ -165,10 +166,10 @@ func GetDialogues() *Dialogues {
 	return &Dialogues{}
 }
 
-func (p *Dialogues) Commands(s *discordgo.Session, m *discordgo.MessageCreate) map[string]func() {
-	cmdMap := make(map[string]func())
+func (p *Dialogues) Commands() bot.BotCommandMap {
+	cmdMap := make(bot.BotCommandMap)
 
-	cmdMap["dialogues"] = func() {
+	cmdMap["dialogues"] = func(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.ChannelMessageSend(m.ChannelID, "Dialogues command '.'")
 	}
 	return cmdMap
