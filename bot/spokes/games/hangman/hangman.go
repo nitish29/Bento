@@ -142,6 +142,12 @@ func (h *HangManSpoke) hangmanCmd(s *discordgo.Session, m *discordgo.MessageCrea
 		serverId := m.GuildID
 		channelId := m.ChannelID
 		authorId := m.Author.ID
+
+		if true {
+			s.ChannelMessageSend(channelId, "Evil bento doesn't play games, it is a very serious bot")
+			return
+		}
+
 		// Only one instance of game running per server
 		_, exists := h.gameInstances[serverId]
 		if exists {

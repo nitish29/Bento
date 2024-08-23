@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"main/bot"
-	"main/bot/jobs"
+	// "main/bot/jobs"
 	"main/bot/spokes/dialogues"
 	"main/bot/spokes/games/hangman"
 	"main/bot/spokes/general"
@@ -38,7 +38,7 @@ func main() {
 		bot.Close()
 	}()
 
-	jobs.StartJob(bot.Session)
+	// jobs.StartJob(bot.Session)
 
 	fmt.Println("Bot running")
 	c := make(chan os.Signal, 1)

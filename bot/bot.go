@@ -8,7 +8,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-const BotPrefix string = "."
+const BotPrefix string = ".evil-"
 
 type DefaultSpoke struct{}
 
@@ -61,24 +61,19 @@ func (b *Bot) SyncSpokes() {
 
 		// Process commands : use currentspoke to avoid closure and scope issues
 		b.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
-			if len(m.Content) <= 0 {
+			if m.Author.ID == s.State.User.ID {
 				return
 			}
 
-			if string(m.Content[0]) != BotPrefix {
+			if !strings.HasPrefix(m.Content, BotPrefix) {
 				return
 			}
 
 			cmdMap := currentspoke.Commands(s, m)
-			cmds := strings.Split(m.Content, " ")
-			for cmd, fn := range cmdMap {
-				if m.Author.ID == s.State.User.ID {
-					return
-				}
-				if cmds[0] == BotPrefix+cmd {
-					fn()
-					return
-				}
+			cmds := strings.Fields(m.Content)
+			fn, ok := cmdMap[strings.TrimPrefix(cmds[0], BotPrefix)]
+			if ok {
+				fn()
 			}
 		})
 	}

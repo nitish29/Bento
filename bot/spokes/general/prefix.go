@@ -14,7 +14,7 @@ func (p *Prefix) Commands(s *discordgo.Session, m *discordgo.MessageCreate) map[
 	cmdMap := make(map[string]func())
 
 	cmdMap["prefix"] = func() {
-		s.ChannelMessageSend(m.ChannelID, "Bento's prefix is '.'")
+		s.ChannelMessageSend(m.ChannelID, "Evil Bento's prefix is '.evil-'")
 	}
 	return cmdMap
 }
@@ -25,7 +25,7 @@ func (p *Prefix) Handler() interface{} {
 			return
 		}
 		if m.Content == "p" {
-			s.ChannelMessageSend(m.ChannelID, "Bento's prefix is '.' he he ")
+			s.ChannelMessageSend(m.ChannelID, "Evil Bento's prefix is '.evil-' he he ")
 		}
 	}
 }
