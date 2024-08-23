@@ -2,6 +2,7 @@ package hangman
 
 import (
 	"fmt"
+	"main/bot"
 	"strings"
 	"unicode"
 
@@ -143,7 +144,7 @@ func (h *HangManSpoke) hangmanCmd(s *discordgo.Session, m *discordgo.MessageCrea
 		channelId := m.ChannelID
 		authorId := m.Author.ID
 
-		if true {
+		if bot.Evil {
 			s.ChannelMessageSend(channelId, "Evil bento doesn't play games, it is a very serious bot")
 			return
 		}

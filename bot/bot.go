@@ -3,15 +3,37 @@ package bot
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
 
-const (
-	BotName string = "Evil Bento"
-	BotPrefix string = ".evil-"
+var (
+	BotName   string = envOrDefault("BENTO_NAME", "Bento")
+	BotPrefix string = envOrDefault("BENTO_PREFIX", ".")
+	Evil      bool   = envOrDefaultBool("BENTO_EVIL", false)
 )
+
+func envOrDefaultBool(key string, defaultVal bool) bool {
+	v := os.Getenv(key)
+	if v == "" {
+		return defaultVal
+	}
+	b, err := strconv.ParseBool(v)
+	if err != nil {
+		panic(fmt.Sprintf("failed to parse bool from %s env %v: %v", v, key, err))
+	}
+	return b
+}
+
+func envOrDefault(key string, defaultVal string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		return defaultVal
+	}
+	return v
+}
 
 type DefaultSpoke struct{}
 
