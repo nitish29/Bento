@@ -16,7 +16,9 @@ type QuoteResponse struct {
 	Text   string `json:"text"`
 }
 
-var subscribedChannels = []string{"207372726221012993", "399577277903536138", "1124585337855950912"}
+var fedxLobby = "1124585337855950912"
+
+var subscribedChannels = []string{"207372726221012993", "399577277903536138", fedxLobby}
 
 func getRapidToken() string {
 	token := os.Getenv("RAPID_API_TOKEN")
@@ -78,7 +80,11 @@ func QueryQuote(s *discordgo.Session) {
 
 	msg := fmt.Sprintf(" :bulb: Quote of the day :bulb:\n > %s", quoteResponse.Text)
 
+
 	for _, c := range subscribedChannels {
+		if c == fedxLobby {
+			msg += "\n\n :tada: Happy Birthday, Justin! :tada:"
+		}
 		s.ChannelMessageSend(c, msg)
 	}
 }

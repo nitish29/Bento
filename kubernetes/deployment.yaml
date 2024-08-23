@@ -5,7 +5,7 @@ metadata:
   labels:
     app: bento
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: bento
@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: bento
-        image: vaticancameos/bento:latest  
+        image: vaticancameos/bento:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 90
@@ -24,5 +24,10 @@ spec:
           - name: API_TOKEN
             valueFrom:
               secretKeyRef:
-                name: bento
+                name: bento-secret
                 key: API_TOKEN
+          - name: RAPID_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: rapid-api-secret
+                key: RAPID_API_TOKEN
