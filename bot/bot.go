@@ -114,7 +114,11 @@ func (b *Bot) SyncSpokes() {
 }
 
 func helpResponse(cmdList []string) func(s *discordgo.Session, m *discordgo.MessageCreate) {
-	cmdString := "- " + strings.Join(cmdList, "\n- ")
+	for i, v := range cmdList {
+		cmdList[i] = "- " + BotPrefix + v
+	}
+
+	cmdString := strings.Join(cmdList, "\n")
 	return func(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%s commands:\n%s", BotName, cmdString))
 	}
