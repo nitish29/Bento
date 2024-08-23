@@ -8,7 +8,10 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-const BotPrefix string = ".evil-"
+const (
+	BotName string = "Evil Bento"
+	BotPrefix string = ".evil-"
+)
 
 type DefaultSpoke struct{}
 

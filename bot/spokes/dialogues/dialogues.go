@@ -193,6 +193,9 @@ Just remember, next time you see me trying to stir things up, it’s all in good
 
 So, here’s my justice: next time, just let me stay and watch the bot show! 🎭`)
 	}
+	cmdMap["good-bento-missing"] = func() {
+		s.ChannelMessageSend(m.ChannelID, `sigh Even a villain like me can't help but miss that goody-two-shoes, Bento. His annoying optimism and relentless kindness were a constant challenge, but deep down, I respected him. Without him around, the chaos feels a little... empty. Guess I’ll just have to find new ways to stir up trouble in his absence.`)
+	}
 	return cmdMap
 }
 

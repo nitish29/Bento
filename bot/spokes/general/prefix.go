@@ -1,6 +1,9 @@
 package general
 
 import (
+	"fmt"
+	"main/bot"
+
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -14,7 +17,7 @@ func (p *Prefix) Commands(s *discordgo.Session, m *discordgo.MessageCreate) map[
 	cmdMap := make(map[string]func())
 
 	cmdMap["prefix"] = func() {
-		s.ChannelMessageSend(m.ChannelID, "Evil Bento's prefix is '.evil-'")
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%s's prefix is '%s'", bot.BotName, bot.BotPrefix))
 	}
 	return cmdMap
 }
@@ -25,7 +28,7 @@ func (p *Prefix) Handler() interface{} {
 			return
 		}
 		if m.Content == "p" {
-			s.ChannelMessageSend(m.ChannelID, "Evil Bento's prefix is '.evil-' he he ")
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%s's prefix is '%s' he he ", bot.BotName, bot.BotPrefix))
 		}
 	}
 }
