@@ -59,7 +59,7 @@ func (p *Evil) Handler() interface{} {
 		if strings.Contains(strings.ToLower(m.Content), strings.ToLower("muppet")) {
 			n := rand.Int() % len(dialogues.ToddPhrases)
 			if bot.Evil {
-				time.Sleep(250)
+				time.Sleep(250 * time.Millisecond)
 			}
 			s.ChannelMessageSend(m.ChannelID, dialogues.ToddPhrases[n])
 		}
