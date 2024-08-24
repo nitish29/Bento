@@ -38,45 +38,47 @@ func (h *HangManSpoke) Commands() bot.BotCommandMap {
 	return cmdMap
 }
 
-func (h *HangManSpoke) Handler() interface{} {
-	return func(s *discordgo.Session, m *discordgo.MessageCreate) {
-		if m.GuildID == "" {
-			return
-		}
-		if m.Author.ID == s.State.User.ID {
-			return
-		}
+func (h *HangManSpoke) Handlers() []interface{} {
+	return []interface{}{
+		func(s *discordgo.Session, m *discordgo.MessageCreate) {
+			if m.GuildID == "" {
+				return
+			}
+			if m.Author.ID == s.State.User.ID {
+				return
+			}
 
-		channelId := m.ChannelID
-		serverId := m.GuildID
+			channelId := m.ChannelID
+			serverId := m.GuildID
 
-		gameInstance, exists := h.gameInstances[serverId]
-		if !exists {
-			return
-		}
+			gameInstance, exists := h.gameInstances[serverId]
+			if !exists {
+				return
+			}
 
-		//ignore message from other channels
-		if gameInstance.channeld != channelId {
-			return
-		}
-		if !gameInstance.isAcceptingLetters {
-			return
-		}
-		// accept single characters only
-		if len(m.Content) != 1 {
-			return
-		}
+			//ignore message from other channels
+			if gameInstance.channeld != channelId {
+				return
+			}
+			if !gameInstance.isAcceptingLetters {
+				return
+			}
+			// accept single characters only
+			if len(m.Content) != 1 {
+				return
+			}
 
-		gameInstance.isAcceptingLetters = false
-		gameInstance.processInput(m.Content)
-		s.ChannelMessageSend(m.ChannelID, gameInstance.getGameStatus())
-		gameInstance.isAcceptingLetters = true
-		if gameInstance.isGameOver {
-			// Clean up
-			delete(h.challengerToServer, gameInstance.challenger)
-			delete(h.serverToChallenger, serverId)
-			delete(h.gameInstances, serverId)
-		}
+			gameInstance.isAcceptingLetters = false
+			gameInstance.processInput(m.Content)
+			s.ChannelMessageSend(m.ChannelID, gameInstance.getGameStatus())
+			gameInstance.isAcceptingLetters = true
+			if gameInstance.isGameOver {
+				// Clean up
+				delete(h.challengerToServer, gameInstance.challenger)
+				delete(h.serverToChallenger, serverId)
+				delete(h.gameInstances, serverId)
+			}
+		},
 	}
 }
 

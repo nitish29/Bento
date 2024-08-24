@@ -42,15 +42,11 @@ type BotCommandMap = map[string]func(s *discordgo.Session, m *discordgo.MessageC
 
 type Spoke interface {
 	Commands() BotCommandMap
-	Handler() interface{}
+	Handlers() []interface{}
 }
 
 func (DefaultSpoke) Commands(s *discordgo.Session, m *discordgo.MessageCreate) map[string]func() {
 	return make(map[string]func())
-}
-
-func (DefaultSpoke) Handler() interface{} {
-	return func() { return }
 }
 
 type Bot struct {
@@ -85,7 +81,9 @@ func (b *Bot) SyncSpokes() {
 
 	for _, spoke := range b.Spokes {
 		// Add spoke handler
-		b.AddHandler(spoke.Handler())
+		for _, handler := range spoke.Handlers() {
+			b.AddHandler(handler)
+		}
 
 		m := spoke.Commands()
 		for cmd, f := range m {

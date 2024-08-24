@@ -22,13 +22,15 @@ func (p *Prefix) Commands() bot.BotCommandMap {
 	return cmdMap
 }
 
-func (p *Prefix) Handler() interface{} {
-	return func(s *discordgo.Session, m *discordgo.MessageCreate) {
-		if m.Author.ID == s.State.User.ID {
-			return
-		}
-		if m.Content == "p" {
-			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%s's prefix is '%s' he he ", bot.BotName, bot.BotPrefix))
-		}
+func (p *Prefix) Handlers() []interface{} {
+	return []interface{}{
+		func(s *discordgo.Session, m *discordgo.MessageCreate) {
+			if m.Author.ID == s.State.User.ID {
+				return
+			}
+			if m.Content == "p" {
+				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%s's prefix is '%s' he he ", bot.BotName, bot.BotPrefix))
+			}
+		},
 	}
 }

@@ -50,21 +50,30 @@ So, here’s my justice: next time, just let me stay and watch the bot show! �
 	return cmdMap
 }
 
-func (p *Evil) Handler() interface{} {
-	return func(s *discordgo.Session, m *discordgo.MessageCreate) {
-		if m.Author.ID == s.State.User.ID {
-			return
-		}
-		if p.fightChannel != m.ChannelID {
-			return
-		}
-
-		if strings.Contains(strings.ToLower(m.Content), strings.ToLower("muppet")) {
-			n := rand.Int() % len(dialogues.ToddPhrases)
-			if bot.Evil {
-				time.Sleep(250 * time.Millisecond)
+func (p *Evil) Handlers() []interface{} {
+	return []interface{}{
+		func(s *discordgo.Session, m *discordgo.MessageCreate) {
+			if m.Author.ID == s.State.User.ID {
+				return
 			}
-			s.ChannelMessageSend(m.ChannelID, dialogues.ToddPhrases[n])
-		}
+			if p.fightChannel != m.ChannelID {
+				return
+			}
+
+			if strings.Contains(strings.ToLower(m.Content), strings.ToLower("muppet")) {
+				n := rand.Int() % len(dialogues.ToddPhrases)
+				if bot.Evil {
+					time.Sleep(250 * time.Millisecond)
+				}
+				s.ChannelMessageSend(m.ChannelID, dialogues.ToddPhrases[n])
+			}
+		},
+		func(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
+			// Check if the reaction is the brick emoji 🧱
+			if r.Emoji.Name == "🧱" {
+				// Send a message in the same channel where the reaction was added
+				s.ChannelMessageSend(r.ChannelID, dialogues.BrickPhrases[rand.Int()%len(dialogues.BrickPhrases)])
+			}
+		},
 	}
 }
