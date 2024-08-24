@@ -1,19 +1,23 @@
 package bot
 
 import (
+	"context"
 	"fmt"
-	"golang.org/x/exp/maps"
 	"os"
 	"strconv"
 	"strings"
 
+	"golang.org/x/exp/maps"
+
 	"github.com/bwmarrin/discordgo"
+	"github.com/liushuangls/go-anthropic/v2"
 )
 
 var (
-	BotName   string = envOrDefault("BENTO_NAME", "Bento")
-	BotPrefix string = envOrDefault("BENTO_PREFIX", ".")
-	Evil      bool   = envOrDefaultBool("BENTO_EVIL", false)
+	BotName          string = envOrDefault("BENTO_NAME", "Bento")
+	BotPrefix        string = envOrDefault("BENTO_PREFIX", ".")
+	Evil             bool   = envOrDefaultBool("BENTO_EVIL", false)
+	EvilSystemPrompt string = `You are a Discord bot named Evil Bento. Your role is to interact with users in a playful yet mischievous manner. You should provide short, witty, and convincing responses that embody your "evil" persona while also playfully teasing the other bot, Bento Responses. Remember to avoid hallucinations and refrain from fabricating any factual information. Keep the tone light-hearted and engaging!`
 )
 
 func envOrDefaultBool(key string, defaultVal bool) bool {
@@ -55,15 +59,12 @@ func (DefaultSpoke) Handler() interface{} {
 
 type Bot struct {
 	*discordgo.Session
-	Spokes []Spoke
+	Spokes          []Spoke
+	anthropicClient *anthropic.Client
 }
 
 func getToken() string {
-	token := os.Getenv("API_TOKEN")
-	if len(token) == 0 {
-		return ""
-	}
-	return token
+	return os.Getenv("API_TOKEN")
 }
 
 func New() (*Bot, error) {
@@ -71,9 +72,17 @@ func New() (*Bot, error) {
 	if err != nil {
 		fmt.Println("Error creating Discord session: ", err)
 	}
-	return &Bot{
+
+	bot := &Bot{
 		Session: discord,
-	}, nil
+	}
+
+	anthropicKey := os.Getenv("BENTO_ANTHROPIC_KEY")
+	if anthropicKey != "" {
+		bot.anthropicClient = anthropic.NewClient(anthropicKey, anthropic.WithBetaVersion(anthropic.BetaPromptCaching20240731))
+	}
+
+	return bot, nil
 }
 
 func (b *Bot) RegisterSpoke(spoke Spoke) {
@@ -100,32 +109,56 @@ func (b *Bot) SyncSpokes() {
 			return
 		}
 
-		triggeredCmd, ok := getTriggerCommand(s, m)
-		if !ok {
-			return
-		}
-
+		triggeredCmd, botTagged := getTriggerCommand(s, m)
 		fn, ok := cmdMap[triggeredCmd]
 		if ok {
 			fn(s, m)
+			return
+		}
+
+		if botTagged && b.anthropicClient != nil {
+			msg := strings.Replace(m.Content, DiscordTag(s.State.User.ID), fmt.Sprintf("@%s", BotName), -1)
+
+			resp, err := b.anthropicClient.CreateMessages(context.Background(), anthropic.MessagesRequest{
+				Model: anthropic.ModelClaude3Haiku20240307,
+				MultiSystem: []anthropic.MessageSystemPart{
+					{
+						Type: "text",
+						Text: EvilSystemPrompt,
+					},
+				},
+				Messages: []anthropic.Message{
+					anthropic.NewUserTextMessage(msg),
+				},
+				MaxTokens: 300,
+			})
+			if err != nil {
+				fmt.Println("error calling claude", msg, err)
+			}
+			s.ChannelMessageSend(m.ChannelID, resp.Content[0].GetText())
 		}
 	})
 }
 
+// getTriggerCommand returns the bot trigger command, along with if the bot was tagged in the message or not
 func getTriggerCommand(s *discordgo.Session, m *discordgo.MessageCreate) (string, bool) {
 	if strings.HasPrefix(m.Content, BotPrefix) {
 		cmds := strings.Fields(m.Content)
-		return strings.TrimPrefix(cmds[0], BotPrefix), true
+		return strings.TrimPrefix(cmds[0], BotPrefix), false
 	}
 
 	for _, u := range m.Mentions {
 		if s.State.User.ID == u.ID {
-			return strings.Fields(strings.Replace(m.Content, fmt.Sprintf("<@%s>", s.State.User.ID), "", -1))[0], true
+			return strings.Fields(strings.Replace(m.Content, DiscordTag(s.State.User.ID), "", -1))[0], true
 		}
 	}
 	fmt.Println(m.Content)
 
 	return "", false
+}
+
+func DiscordTag(id string) string {
+	return fmt.Sprintf("<@%s>", id)
 }
 
 func helpResponse(cmdList []string) func(s *discordgo.Session, m *discordgo.MessageCreate) {
