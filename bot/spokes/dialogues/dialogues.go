@@ -159,10 +159,10 @@ var ToddPhrases = []string{
 	"Muppets make every moment special.",
 }
 var BrickPhrases = []string{
-	"@vaticancameos. needs more bricks🧱🧱🧱! HELLPPP!",
-	"@vaticancameos. requires a hard reset! 🧱🔄",
-	"@vaticancameos. needs a firmware update, stat! 💻🆘",
-	"@vaticancameos. is buffering... and bricked! ⏳🧱",
+	"<@185686963993444353> needs more bricks🧱🧱🧱! HELLPPP!",
+	"<@185686963993444353> requires a hard reset! 🧱🔄",
+	"<@185686963993444353> needs a firmware update, stat! 💻🆘",
+	"<@185686963993444353> is buffering... and bricked! ⏳🧱",
 	"I'm bricked up! 🧱🆙",
 	"I am glitching!",
 	"Must be construction season! 🧱🚧",
