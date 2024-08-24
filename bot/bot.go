@@ -139,7 +139,7 @@ func (b *Bot) SyncSpokes() {
 
 			resp, err := b.anthropicClient.CreateMessages(context.Background(), anthropic.MessagesRequest{
 				Model:  anthropic.ModelClaude3Haiku20240307,
-				System: EvilSystemPrompts[n],
+				System: EvilSystemPrompts[n] + " You can refer to the user asking the question with string '" + DiscordTag(m.Author.ID) + "'.",
 				// MultiSystem: []anthropic.MessageSystemPart{
 				// 	{
 				// 		Type: "text",
