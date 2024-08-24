@@ -158,6 +158,28 @@ var ToddPhrases = []string{
 	"A world filled with Muppet magic.",
 	"Muppets make every moment special.",
 }
+var BrickPhrases = []string{
+	"@vaticancameos. needs more bricks🧱🧱🧱! HELLPPP!",
+	"@vaticancameos. requires a hard reset! 🧱🔄",
+	"@vaticancameos. needs a firmware update, stat! 💻🆘",
+	"@vaticancameos. is buffering... and bricked! ⏳🧱",
+	"I'm bricked up! 🧱🆙",
+	"I am glitching!",
+	"Must be construction season! 🧱🚧",
+	"It’s a bricked up kind of day! 🧱🌞",
+	"Don't be such a 🧱",
+	"When life gives you bricks, get bricked up! 🧱🔨",
+	"https://www.youtube.com/watch?v=HrxX9TBj2zY",
+	"I'm stuck between a brick and a hard place—wait, aren't they the same?",
+	"Why did the brick go to therapy? It had too many walls!",
+	"I'm rock solid... or should I say, brick solid!",
+	"You've got to hand it to bricks—they really know how to build relationships.",
+	"Don’t take life for granite, be a brick!",
+	`So here I stand, bricked up and bold,
+	A story of bricks that’s often told.
+	For in this moment, try as you might,
+	You’ll see this brick, reaching new height.`,
+}
 var Bento = "My creator named me after Ben(ben) and Todd(to), two great minds. One is scary clever and the other is cleverly funny"
 
 type Dialogues struct{}
