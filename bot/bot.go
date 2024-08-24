@@ -138,17 +138,18 @@ func (b *Bot) SyncSpokes() {
 			n := rand.Int() % len(EvilSystemPrompts)
 
 			resp, err := b.anthropicClient.CreateMessages(context.Background(), anthropic.MessagesRequest{
-				Model: anthropic.ModelClaude3Haiku20240307,
-				MultiSystem: []anthropic.MessageSystemPart{
-					{
-						Type: "text",
-						Text: EvilSystemPrompts[n],
-						// prompt is too short to cache
-						// CacheControl: &anthropic.MessageCacheControl{
-						// 	Type: anthropic.CacheControlTypeEphemeral,
-						// },
-					},
-				},
+				Model:  anthropic.ModelClaude3Haiku20240307,
+				System: EvilSystemPrompts[n],
+				// MultiSystem: []anthropic.MessageSystemPart{
+				// 	{
+				// 		Type: "text",
+				// 		Text: EvilSystemPrompts[n],
+				// 		// prompt is too short to cache
+				// 		// CacheControl: &anthropic.MessageCacheControl{
+				// 		// 	Type: anthropic.CacheControlTypeEphemeral,
+				// 		// },
+				// 	},
+				// },
 				Messages: []anthropic.Message{
 					anthropic.NewUserTextMessage(msg),
 				},
