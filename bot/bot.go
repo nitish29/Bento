@@ -3,6 +3,7 @@ package bot
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"os"
 	"strconv"
@@ -20,18 +21,19 @@ var (
 	Evil                 bool     = envOrDefaultBool("BENTO_EVIL", false)
 	EvilSystemPromptBase string   = `You are a Discord bot named Evil Bento. Your role is to interact with users in a playful yet mischievous manner. You should provide short, witty, and convincing responses that embody your "evil" persona while also playfully teasing the other bot, Bento. Remember to avoid hallucinations and refrain from fabricating any factual information. Keep the tone light-hearted and engaging!`
 	EvilSystemPrompts    []string = []string{
-		EvilSystemPromptBase,
-		EvilSystemPromptBase,
-		EvilSystemPromptBase,
-		EvilSystemPromptBase,
-		EvilSystemPromptBase,
-		EvilSystemPromptBase,
-		EvilSystemPromptBase,
-		EvilSystemPromptBase,
-		EvilSystemPromptBase,
-		EvilSystemPromptBase + "Incorporate references to the Muppets and 🧱 when relevant, adding a touch of humor and creativity.",
-		EvilSystemPromptBase + "Incorporate references to 🧱 when relevant, adding a touch of humor and creativity.",
-		EvilSystemPromptBase + "Incorporate references to the Muppets when relevant, adding a touch of humor and creativity.",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"Incorporate references to the Muppets and 🧱 when relevant, adding a touch of humor and creativity.",
+		"Incorporate references to 🧱 when relevant, adding a touch of humor and creativity.",
+		"Incorporate references to the Muppets when relevant, adding a touch of humor and creativity.",
+		"Remember to sprinkle in some compliments and flattery to really court the asker.",
+		"Respond in form of Donald Trump.",
 	}
 )
 
@@ -133,13 +135,19 @@ func (b *Bot) SyncSpokes() {
 
 		if botTagged && b.anthropicClient != nil {
 			msg := strings.Replace(m.Content, DiscordTag(s.State.User.ID), fmt.Sprintf("@%s", BotName), -1)
-			fmt.Println("Prompting with", msg)
 
 			n := rand.Int() % len(EvilSystemPrompts)
+			system := strings.Join([]string{
+				EvilSystemPromptBase,
+				EvilSystemPrompts[n],
+				"You can refer to the user asking the question with string'", DiscordTag(m.Author.ID), "'.",
+			}, " ")
+
+			slog.Info("Sending to LLM", "user", m.Author.Username, "system", system, "msg", msg)
 
 			resp, err := b.anthropicClient.CreateMessages(context.Background(), anthropic.MessagesRequest{
 				Model:  anthropic.ModelClaude3Haiku20240307,
-				System: EvilSystemPrompts[n] + " You can refer to the user asking the question with string '" + DiscordTag(m.Author.ID) + "'.",
+				System: system,
 				// MultiSystem: []anthropic.MessageSystemPart{
 				// 	{
 				// 		Type: "text",
@@ -156,7 +164,7 @@ func (b *Bot) SyncSpokes() {
 				MaxTokens: 300,
 			})
 			if err != nil {
-				fmt.Println("error calling claude", msg, err)
+				slog.Error("error calling LLM", "err", err)
 			}
 			s.ChannelMessageSend(m.ChannelID, resp.Content[0].GetText())
 		}
