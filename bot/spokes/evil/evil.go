@@ -11,7 +11,7 @@ import (
 )
 
 type Evil struct {
-	fightMode string
+	fightChannel string
 }
 
 func GetEvil() *Evil {
@@ -22,11 +22,11 @@ func (p *Evil) Commands() bot.BotCommandMap {
 	cmdMap := make(bot.BotCommandMap)
 
 	cmdMap["fight"] = func(s *discordgo.Session, m *discordgo.MessageCreate) {
-		p.fightMode = m.ChannelID
+		p.fightChannel = m.ChannelID
 		s.ChannelMessageSend(m.ChannelID, "@Bento are you a man of a muppet?")
 	}
 	cmdMap["standdown"] = func(s *discordgo.Session, m *discordgo.MessageCreate) {
-		p.fightMode = ""
+		p.fightChannel = ""
 		s.ChannelMessageSend(m.ChannelID, "Evil Bento listens in disappointment, showing mercy while mourning the victory it could have easily claimed.")
 	}
 	cmdMap["status"] = func(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -55,14 +55,14 @@ func (p *Evil) Handler() interface{} {
 		if m.Author.ID == s.State.User.ID {
 			return
 		}
-		if p.fightMode != m.ChannelID {
+		if p.fightChannel != m.ChannelID {
 			return
 		}
 
 		if strings.Contains(strings.ToLower(m.Content), strings.ToLower("muppet")) {
 			n := rand.Int() % len(dialogues.ToddPhrases)
 			if bot.Evil {
-				time.Sleep(250)
+				time.Sleep(250 * time.Millisecond)
 			}
 			s.ChannelMessageSend(m.ChannelID, dialogues.ToddPhrases[n])
 		}

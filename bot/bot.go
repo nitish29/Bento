@@ -100,17 +100,32 @@ func (b *Bot) SyncSpokes() {
 			return
 		}
 
-		if !strings.HasPrefix(m.Content, BotPrefix) {
+		triggeredCmd, ok := getTriggerCommand(s, m)
+		if !ok {
 			return
 		}
 
-		cmds := strings.Fields(m.Content)
-		triggeredCmd := strings.TrimPrefix(cmds[0], BotPrefix)
 		fn, ok := cmdMap[triggeredCmd]
 		if ok {
 			fn(s, m)
 		}
 	})
+}
+
+func getTriggerCommand(s *discordgo.Session, m *discordgo.MessageCreate) (string, bool) {
+	if strings.HasPrefix(m.Content, BotPrefix) {
+		cmds := strings.Fields(m.Content)
+		return strings.TrimPrefix(cmds[0], BotPrefix), true
+	}
+
+	for _, u := range m.Mentions {
+		if s.State.User.ID == u.ID {
+			return strings.Fields(strings.Replace(m.Content, fmt.Sprintf("<@%s>", s.State.User.ID), "", -1))[0], true
+		}
+	}
+	fmt.Println(m.Content)
+
+	return "", false
 }
 
 func helpResponse(cmdList []string) func(s *discordgo.Session, m *discordgo.MessageCreate) {
