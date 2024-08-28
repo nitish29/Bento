@@ -3,8 +3,11 @@ package main
 import (
 	"fmt"
 	"main/bot"
+
+	// "main/bot/jobs"
 	"main/bot/jobs"
 	"main/bot/spokes/dialogues"
+	"main/bot/spokes/evil"
 	"main/bot/spokes/games/hangman"
 	"main/bot/spokes/general"
 	"os"
@@ -14,31 +17,37 @@ import (
 )
 
 func main() {
-	bot, err := bot.New()
+	b, err := bot.New()
 	if err != nil {
 		fmt.Println("Error creating Discord session: ", err)
 	}
 
 	// Register spokes to bot
 
-	bot.RegisterSpoke(dialogues.GetDialogues())
-	bot.RegisterSpoke(general.GetPrefix())
-	bot.RegisterSpoke(hangman.GetHangManSpoke())
+	if bot.Evil {
+		b.RegisterSpoke(evil.GetEvil())
+	} else {
+		b.RegisterSpoke(dialogues.GetDialogues())
+	}
+	b.RegisterSpoke(general.GetPrefix())
+	b.RegisterSpoke(hangman.GetHangManSpoke())
 
-	bot.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
+	b.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
 
-	bot.SyncSpokes()
+	b.SyncSpokes()
 
-	err = bot.Open()
+	err = b.Open()
 	if err != nil {
 		fmt.Println("Error opening Discord session: ", err)
 	}
 	defer func() {
 		fmt.Println("Bot terminating")
-		bot.Close()
+		b.Close()
 	}()
 
-	jobs.StartJob(bot.Session)
+	if !bot.Evil {
+		jobs.StartJob(b.Session)
+	}
 
 	fmt.Println("Bot running")
 	c := make(chan os.Signal, 1)
