@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log/slog"
 	"main/bot"
 
 	// "main/bot/jobs"
@@ -19,7 +19,7 @@ import (
 func main() {
 	b, err := bot.New()
 	if err != nil {
-		fmt.Println("Error creating Discord session: ", err)
+		slog.Error("Error creating Discord session", "err", err)
 	}
 
 	// Register spokes to bot
@@ -39,14 +39,14 @@ func main() {
 
 	err = b.Open()
 	if err != nil {
-		fmt.Println("Error opening Discord session: ", err)
+		slog.Error("Error opening Discord session", "err", err)
 	}
 	defer func() {
-		fmt.Println("Bot terminating")
+		slog.Info("Bot terminating")
 		b.Close()
 	}()
 
-	fmt.Println("Bot running")
+	slog.Info("Bot running", "user", b.State.User)
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	<-c
