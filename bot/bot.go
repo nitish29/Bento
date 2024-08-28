@@ -16,24 +16,19 @@ import (
 )
 
 var (
-	BotName              string   = envOrDefault("BENTO_NAME", "Bento")
-	BotPrefix            string   = envOrDefault("BENTO_PREFIX", ".")
-	Evil                 bool     = envOrDefaultBool("BENTO_EVIL", false)
-	EvilSystemPromptBase string   = `You are a Discord bot named Evil Bento. Your role is to interact with users in a playful yet mischievous manner. You should provide short, witty, and convincing responses that embody your "evil" persona while also playfully teasing the other bot, Bento. Remember to avoid hallucinations and refrain from fabricating any factual information. Keep the tone light-hearted and engaging!`
-	EvilSystemPrompts    []string = []string{
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"Incorporate references to the Muppets and 🧱 when relevant, adding a touch of humor and creativity.",
-		"Incorporate references to 🧱 when relevant, adding a touch of humor and creativity.",
-		"Incorporate references to the Muppets when relevant, adding a touch of humor and creativity.",
-		"Remember to sprinkle in some compliments and flattery to really court the asker.",
-		"Respond in form of Donald Trump.",
+	BotName                 string = envOrDefault("BENTO_NAME", "Bento")
+	BotPrefix               string = envOrDefault("BENTO_PREFIX", ".")
+	Evil                    bool   = envOrDefaultBool("BENTO_EVIL", false)
+	EvilSystemPromptPrefix  string = `You are a Discord bot named Evil Bento. Your role is to interact with users in a playful yet mischievous manner. You should provide short, witty, and convincing responses that embody your "evil" persona.`
+	EvilSystemPromptPostfix string = "Remember to avoid hallucinations and refrain from fabricating any factual information. Keep the tone light-hearted and engaging!"
+
+	EvilSystemPromptAddins map[string]float64 = map[string]float64{
+		"Playfully tease the other bot, Bento when relevant.":                                  0.7,
+		"Incorporate references to the Muppets adding a touch of humor and creativity.":        0.05,
+		"Incorporate references to 🧱 when relevant to adding a touch of humor and creativity.": 0.05,
+		"Incorporate references to being bricked up when relevant.":                            0.02,
+		"Remember to sprinkle in some compliments and flattery to really court the asker.":     0.05,
+		"Respond in form of Donald Trump.":                                                     0.1,
 	}
 )
 
@@ -136,12 +131,17 @@ func (b *Bot) SyncSpokes() {
 		if botTagged && b.anthropicClient != nil {
 			msg := strings.Replace(m.Content, DiscordTag(s.State.User.ID), fmt.Sprintf("@%s", BotName), -1)
 
-			n := rand.Int() % len(EvilSystemPrompts)
-			system := strings.Join([]string{
-				EvilSystemPromptBase,
-				EvilSystemPrompts[n],
+			systemParts := []string{EvilSystemPromptPrefix}
+			for addin, p := range EvilSystemPromptAddins {
+				if rand.Float64() < p {
+					systemParts = append(systemParts, addin)
+				}
+			}
+			systemParts = append(systemParts,
+				EvilSystemPromptPostfix,
 				"You can refer to the user asking the question with string'", DiscordTag(m.Author.ID), "'.",
-			}, " ")
+			)
+			system := strings.Join(systemParts, " ")
 
 			slog.Info("Sending to LLM", "user", m.Author.Username, "system", system, "msg", msg)
 
