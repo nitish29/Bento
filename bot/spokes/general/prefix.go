@@ -13,10 +13,10 @@ func GetPrefix() *Prefix {
 	return &Prefix{}
 }
 
-func (p *Prefix) Commands(s *discordgo.Session, m *discordgo.MessageCreate) map[string]func() {
-	cmdMap := make(map[string]func())
+func (p *Prefix) Commands() bot.BotCommandMap {
+	cmdMap := make(bot.BotCommandMap)
 
-	cmdMap["prefix"] = func() {
+	cmdMap["prefix"] = func(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%s's prefix is '%s'", bot.BotName, bot.BotPrefix))
 	}
 	return cmdMap

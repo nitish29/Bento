@@ -2,6 +2,7 @@ package bot
 
 import (
 	"fmt"
+	"golang.org/x/exp/maps"
 	"os"
 	"strconv"
 	"strings"
@@ -37,8 +38,10 @@ func envOrDefault(key string, defaultVal string) string {
 
 type DefaultSpoke struct{}
 
+type BotCommandMap = map[string]func(s *discordgo.Session, m *discordgo.MessageCreate)
+
 type Spoke interface {
-	Commands(s *discordgo.Session, m *discordgo.MessageCreate) map[string]func()
+	Commands() BotCommandMap
 	Handler() interface{}
 }
 
@@ -78,28 +81,45 @@ func (b *Bot) RegisterSpoke(spoke Spoke) {
 }
 
 func (b *Bot) SyncSpokes() {
+	cmdMap := make(BotCommandMap)
+
 	for _, spoke := range b.Spokes {
-		// need to reassign spoke to interim variable here else commands won't work because of closure and scope of spoke.
-		currentspoke := spoke
 		// Add spoke handler
-		b.AddHandler(currentspoke.Handler())
+		b.AddHandler(spoke.Handler())
 
-		// Process commands : use currentspoke to avoid closure and scope issues
-		b.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
-			if m.Author.ID == s.State.User.ID {
-				return
-			}
+		m := spoke.Commands()
+		for cmd, f := range m {
+			cmdMap[cmd] = f
+		}
+	}
 
-			if !strings.HasPrefix(m.Content, BotPrefix) {
-				return
-			}
+	cmdMap["help"] = helpResponse(maps.Keys(cmdMap))
 
-			cmdMap := currentspoke.Commands(s, m)
-			cmds := strings.Fields(m.Content)
-			fn, ok := cmdMap[strings.TrimPrefix(cmds[0], BotPrefix)]
-			if ok {
-				fn()
-			}
-		})
+	b.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
+		if m.Author.ID == s.State.User.ID {
+			return
+		}
+
+		if !strings.HasPrefix(m.Content, BotPrefix) {
+			return
+		}
+
+		cmds := strings.Fields(m.Content)
+		triggeredCmd := strings.TrimPrefix(cmds[0], BotPrefix)
+		fn, ok := cmdMap[triggeredCmd]
+		if ok {
+			fn(s, m)
+		}
+	})
+}
+
+func helpResponse(cmdList []string) func(s *discordgo.Session, m *discordgo.MessageCreate) {
+	for i, v := range cmdList {
+		cmdList[i] = "- " + BotPrefix + v
+	}
+
+	cmdString := strings.Join(cmdList, "\n")
+	return func(s *discordgo.Session, m *discordgo.MessageCreate) {
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%s commands:\n%s", BotName, cmdString))
 	}
 }

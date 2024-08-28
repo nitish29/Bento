@@ -23,12 +23,13 @@ func main() {
 	}
 
 	// Register spokes to bot
-
 	if bot.Evil {
 		b.RegisterSpoke(evil.GetEvil())
 	} else {
 		b.RegisterSpoke(dialogues.GetDialogues())
+		jobs.StartJob(b.Session)
 	}
+
 	b.RegisterSpoke(general.GetPrefix())
 	b.RegisterSpoke(hangman.GetHangManSpoke())
 
@@ -44,10 +45,6 @@ func main() {
 		fmt.Println("Bot terminating")
 		b.Close()
 	}()
-
-	if !bot.Evil {
-		jobs.StartJob(b.Session)
-	}
 
 	fmt.Println("Bot running")
 	c := make(chan os.Signal, 1)
