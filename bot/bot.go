@@ -58,7 +58,12 @@ type BotCommandMap = map[string]func(s *discordgo.Session, m *discordgo.MessageC
 
 type Spoke interface {
 	Commands() BotCommandMap
-	Handler() interface{}
+}
+type SpokeMessageCreateHandler interface {
+	MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate)
+}
+type SpokeMessageReactionAddHandler interface {
+	MessageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd)
 }
 
 func (DefaultSpoke) Commands(s *discordgo.Session, m *discordgo.MessageCreate) map[string]func() {
@@ -106,7 +111,14 @@ func (b *Bot) SyncSpokes() {
 
 	for _, spoke := range b.Spokes {
 		// Add spoke handler
-		b.AddHandler(spoke.Handler())
+		messageCreateHandler, ok := spoke.(SpokeMessageCreateHandler)
+		if ok {
+			b.AddHandler(messageCreateHandler.MessageCreate)
+		}
+		messageReactionAddHandler, ok := spoke.(SpokeMessageReactionAddHandler)
+		if ok {
+			b.AddHandler(messageReactionAddHandler.MessageReaction)
+		}
 
 		m := spoke.Commands()
 		for cmd, f := range m {

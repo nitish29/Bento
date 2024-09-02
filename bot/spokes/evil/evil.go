@@ -18,6 +18,10 @@ func GetEvil() *Evil {
 	return &Evil{}
 }
 
+func sendMessageFromList(s *discordgo.Session, reference *discordgo.MessageReference, options []string) {
+	s.ChannelMessageSendReply(reference.ChannelID, options[rand.Int()%len(options)], reference)
+}
+
 func (p *Evil) Commands() bot.BotCommandMap {
 	cmdMap := make(bot.BotCommandMap)
 
@@ -45,26 +49,34 @@ So, here’s my justice: next time, just let me stay and watch the bot show! �
 		s.ChannelMessageSend(m.ChannelID, `sigh Even a villain like me can't help but miss that goody-two-shoes, Bento. His annoying optimism and relentless kindness were a constant challenge, but deep down, I respected him. Without him around, the chaos feels a little... empty. Guess I’ll just have to find new ways to stir up trouble in his absence.`)
 	}
 	cmdMap["🧱"] = func(s *discordgo.Session, m *discordgo.MessageCreate) {
-		s.ChannelMessageSend(m.ChannelID, dialogues.BrickPhrases[rand.Int()%len(dialogues.BrickPhrases)])
+		sendMessageFromList(s, m.SoftReference(), dialogues.BrickPhrases)
 	}
 	return cmdMap
 }
 
-func (p *Evil) Handler() interface{} {
-	return func(s *discordgo.Session, m *discordgo.MessageCreate) {
-		if m.Author.ID == s.State.User.ID {
-			return
-		}
-		if p.fightChannel != m.ChannelID {
-			return
-		}
+func (p *Evil) MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
+	if m.Author.ID == s.State.User.ID {
+		return
+	}
+	if p.fightChannel != m.ChannelID {
+		return
+	}
 
-		if strings.Contains(strings.ToLower(m.Content), strings.ToLower("muppet")) {
-			n := rand.Int() % len(dialogues.ToddPhrases)
-			if bot.Evil {
-				time.Sleep(250 * time.Millisecond)
-			}
-			s.ChannelMessageSend(m.ChannelID, dialogues.ToddPhrases[n])
-		}
+	if strings.Contains(strings.ToLower(m.Content), strings.ToLower("muppet")) {
+		time.Sleep(250 * time.Millisecond)
+		sendMessageFromList(s, m.SoftReference(), dialogues.ToddPhrases)
+	}
+}
+
+var falseBool = false
+
+func (p Evil) MessageReaction(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
+	if r.Emoji.Name == "🧱" {
+		sendMessageFromList(s, &discordgo.MessageReference{
+			MessageID:       r.MessageID,
+			ChannelID:       r.ChannelID,
+			GuildID:         r.GuildID,
+			FailIfNotExists: &falseBool,
+		}, dialogues.BrickPhrases)
 	}
 }

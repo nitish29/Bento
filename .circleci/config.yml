@@ -1,0 +1,40 @@
+version: 2
+jobs:
+  release-docker:
+    docker:
+      - image: benjamincaldwell/ci-scripts
+    working_directory: /go/src/github.com/bcaldwell/Bento
+
+    steps:
+      - checkout
+      - setup_remote_docker
+
+      - run:
+          name: Build and pushing docker image
+          command: ci-scripts docker/build_and_push_image --docker-images-dockerRepo $DOCKER_IMAGE --
+          environment:
+            DOCKER_IMAGE_PLATFORM: "linux/amd64,linux/arm64"
+
+  deploy:
+    docker:
+      - image: cimg/base:current
+
+    steps:
+      - run:
+          name: Updating docker image in k8s-config
+          command: |
+            curl -H "Authorization: Bearer ${GITHUB_TOKEN}" "https://api.github.com/repos/${K8S_CONFIG_REPO}/actions/workflows/update-image.yaml/dispatches" -d '{"ref": "main", "inputs": {"repository": "'"${DOCKER_IMAGE}"'", "tag": "'"${CIRCLE_SHA1}"'"}}'
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - release-docker:
+          context: docker
+      - deploy:
+          requires:
+            - release-docker
+          filters:
+            branches:
+              only: main
+          context: k8s-config-cd-trigger
